@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform groundCheck;                           
     [SerializeField] private Transform ceilingCheck;
+    [SerializeField] PlayerAnimation playerAnimation;
     [SerializeField] bool bGrounded = false;
     [SerializeField] bool bAirControl = false;
     bool bFacingRight = true;
@@ -36,16 +37,20 @@ public class PlayerController : MonoBehaviour
     {
         bool bWasGrounded = bGrounded;
         bGrounded = false;
+        
         Collider[] colliders = Physics.OverlapSphere(groundCheck.position, groundedRadius, groundLayer);
         for (int i = 0; i < colliders.Length;i++)
         {
             if (colliders[i].gameObject != gameObject)
             {
                 bGrounded = true;
-                if (!bWasGrounded)
+                if (bWasGrounded == false)
                 {
                     //landed on the ground
+                    playerAnimation.PlayerLanded();
+
                 }
+                break;
             }
         }
 
@@ -75,8 +80,9 @@ public class PlayerController : MonoBehaviour
 
         if (bGrounded && jump)
         {
-            bGrounded = false;
+            //bGrounded = false;
             rb.AddForce(new Vector3(0, jumpForce, 0));
+            playerAnimation.PlayerJumped();
         }
 
         if (move > 0 && !bFacingRight)
