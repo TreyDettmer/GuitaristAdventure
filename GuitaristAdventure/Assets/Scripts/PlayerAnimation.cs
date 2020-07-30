@@ -41,15 +41,25 @@ public class PlayerAnimation : MonoBehaviour
 
     public void PlayerLanded()
     {
-        Debug.Log("Setting grounded to true");
         animator.SetBool("Falling", false);
         animator.SetBool("Grounded", true);
     }
 
     public void PlayerJumped()
     {
-        Debug.Log("Setting grounded to false");
         guitar.Jump();
         animator.SetBool("Grounded", false);
     }
+
+    public void PlayerAttacked()
+    {
+        animator.SetBool("UpperBodyAction", true);
+        guitar.Swing();
+    }
+
+    public GuitarController GetGuitar() { return guitar; }
+
+
+
+
 }

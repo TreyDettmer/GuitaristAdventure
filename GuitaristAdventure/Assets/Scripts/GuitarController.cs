@@ -7,6 +7,7 @@ public class GuitarController : MonoBehaviour
     [SerializeField] Animator animator;
     [SerializeField] Transform backTransform;
     [SerializeField] Transform playerTransform;
+    [SerializeField] Transform swingPointTransform;
     // Start is called before the first frame update
     void Start()
     {
@@ -32,6 +33,12 @@ public class GuitarController : MonoBehaviour
         animator.SetTrigger("Jump");
     }
 
+    public void Swing()
+    {
+        SetIntoSwingPosition();
+        animator.SetTrigger("Swing");
+    }
+
     public void Disable()
     {
         AttachToBack();
@@ -39,7 +46,7 @@ public class GuitarController : MonoBehaviour
     }
 
 
-    void AttachToBack()
+    public void AttachToBack()
     {
         transform.SetParent(backTransform);
         transform.localPosition = Vector3.zero;
@@ -53,5 +60,16 @@ public class GuitarController : MonoBehaviour
         transform.localPosition = new Vector3(.012f, -0.783f, -0.122f);
         transform.localRotation = new Quaternion(0, 0, 0, 1);
         transform.localScale = Vector3.one;
+    }
+
+    void SetIntoSwingPosition()
+    {
+        transform.SetParent(swingPointTransform);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = new Quaternion(0,0,0,1);
+        transform.localScale = Vector3.one;
+        //transform.localPosition = new Vector3(1.092f, 0.404f, 2.142f);
+        //transform.localEulerAngles = new Vector3(147.683f, -168.05f, -10.84299f);
+        //transform.localScale = Vector3.one;
     }
 }

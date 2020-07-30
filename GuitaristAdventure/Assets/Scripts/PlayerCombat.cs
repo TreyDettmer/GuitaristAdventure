@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
-
+    [SerializeField] PlayerAnimation playerAnimation;
     [SerializeField] LayerMask attackableLayers;
     [SerializeField] Transform attackPoint;
     [SerializeField] float attackRange;
     [SerializeField] int attackDamage = 40;
     [SerializeField] float attackRate = 2f;
+    [SerializeField] float attackAnimationDelay = .15f;
     float nextAttackTime = 0f;
     // Start is called before the first frame update
     void Start()
@@ -33,13 +34,19 @@ public class PlayerCombat : MonoBehaviour
 
     void Attack()
     {
-        //TODO: play attack animation and do attack using animation event
+        
+        playerAnimation.PlayerAttacked();
+        StartCoroutine("SwingAttackDelayRoutine");
+    }
 
+    public void SwingAttack()
+    {
+        
         //Detect objects in range of attack
         Collider[] attackedColliders = Physics.OverlapSphere(attackPoint.position, attackRange, attackableLayers);
         foreach (Collider collider in attackedColliders)
         {
-            
+
             collider.GetComponent<HealthManager>().TakeDamage(attackDamage);
         }
     }
@@ -52,5 +59,11 @@ public class PlayerCombat : MonoBehaviour
         }
 
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+    }
+
+    IEnumerator SwingAttackDelayRoutine()
+    {
+        yield return new WaitForSeconds(attackAnimationDelay);
+        SwingAttack();
     }
 }
