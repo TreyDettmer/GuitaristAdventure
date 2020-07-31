@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform groundCheck;                           
     [SerializeField] private Transform ceilingCheck;
     [SerializeField] PlayerAnimation playerAnimation;
+    [SerializeField] PlayerCombat playerCombat;
     [SerializeField] bool bGrounded = false;
     [SerializeField] bool bAirControl = false;
     bool bFacingRight = true;
@@ -92,6 +93,10 @@ public class PlayerController : MonoBehaviour
         else if (move < 0 && bFacingRight)
         {
             Flip();
+        }
+        if (move != 0 && bGrounded)
+        {
+            playerCombat.StopSerenading();
         }
     }
 

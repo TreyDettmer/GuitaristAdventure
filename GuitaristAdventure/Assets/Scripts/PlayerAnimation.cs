@@ -41,12 +41,14 @@ public class PlayerAnimation : MonoBehaviour
 
     public void PlayerLanded()
     {
+        
         animator.SetBool("Falling", false);
         animator.SetBool("Grounded", true);
     }
 
     public void PlayerJumped()
     {
+        PlayerStoppedSerenading();
         guitar.Jump();
         animator.SetBool("Grounded", false);
     }
@@ -54,7 +56,24 @@ public class PlayerAnimation : MonoBehaviour
     public void PlayerAttacked()
     {
         animator.SetBool("UpperBodyAction", true);
+        animator.SetBool("Attacking", true);
         guitar.Swing();
+    }
+
+    public void PlayerStartedSerenading()
+    {
+        animator.SetBool("UpperBodyAction", true);
+        animator.SetBool("Serenading", true);
+        guitar.Serenade();
+        
+    }
+
+    public void PlayerStoppedSerenading()
+    {
+        animator.SetBool("Serenading", false);
+        animator.SetBool("UpperBodyAction", false);
+        guitar.StopSerenading();
+
     }
 
     public GuitarController GetGuitar() { return guitar; }

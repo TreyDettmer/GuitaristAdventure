@@ -733,7 +733,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.11178003, y: -0.70111746, z: 0.1127401, w: 0.6951469}
-  m_LocalPosition: {x: 8.055305, y: 6.8071814, z: -8.524401}
+  m_LocalPosition: {x: 8.055269, y: 6.8071814, z: -8.520256}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -811,6 +811,7 @@ MonoBehaviour:
   backTransform: {fileID: 1123411058}
   playerTransform: {fileID: 1684151092}
   swingPointTransform: {fileID: 1507170485}
+  serenadePointTransform: {fileID: 2041901824}
 --- !u!1 &1123411057
 GameObject:
   m_ObjectHideFlags: 0
@@ -1039,7 +1040,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1486977351}
   m_LocalRotation: {x: 0.11178003, y: -0.70111746, z: 0.1127401, w: 0.6951469}
-  m_LocalPosition: {x: 8.055305, y: 6.8071814, z: -8.524401}
+  m_LocalPosition: {x: 8.055269, y: 6.8071814, z: -8.520256}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 628821028}
@@ -1209,6 +1210,7 @@ Transform:
   - {fileID: 702183337}
   - {fileID: 1043156351}
   - {fileID: 1507170485}
+  - {fileID: 2041901824}
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1261,6 +1263,7 @@ MonoBehaviour:
   groundCheck: {fileID: 675369178}
   ceilingCheck: {fileID: 1313178480}
   playerAnimation: {fileID: 1684151097}
+  playerCombat: {fileID: 1684151096}
   bGrounded: 0
   bAirControl: 1
 --- !u!114 &1684151096
@@ -1276,6 +1279,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerAnimation: {fileID: 1684151097}
+  playerController: {fileID: 1684151095}
   attackableLayers:
     serializedVersion: 2
     m_Bits: 512
@@ -1302,6 +1306,36 @@ MonoBehaviour:
   playerController: {fileID: 1684151095}
   animator: {fileID: 5333213150319743080}
   guitar: {fileID: 1043156353}
+--- !u!1 &2041901823
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2041901824}
+  m_Layer: 0
+  m_Name: GuitarSerenadePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2041901824
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2041901823}
+  m_LocalRotation: {x: -0.15809843, y: -0.6825682, z: -0.706357, w: 0.10082293}
+  m_LocalPosition: {x: 0.083, y: 0.823, z: -1.005}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_Children: []
+  m_Father: {fileID: 1684151092}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: -95.02699, y: 258.005, z: 303.115}
 --- !u!1 &94504863195631343
 GameObject:
   m_ObjectHideFlags: 0

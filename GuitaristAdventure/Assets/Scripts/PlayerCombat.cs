@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerCombat : MonoBehaviour
 {
     [SerializeField] PlayerAnimation playerAnimation;
+    [SerializeField] PlayerController playerController;
     [SerializeField] LayerMask attackableLayers;
     [SerializeField] Transform attackPoint;
     [SerializeField] float attackRange;
@@ -12,6 +13,8 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] float attackRate = 2f;
     [SerializeField] float attackAnimationDelay = .15f;
     float nextAttackTime = 0f;
+    bool bSwingAttack = false;
+    bool bSerenading = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -21,20 +24,45 @@ public class PlayerCombat : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Time.time >= nextAttackTime)
+
+        if (Input.GetKeyDown(KeyCode.G))
         {
-            if (Input.GetKeyDown(KeyCode.G))
+            if (!bSerenading)
             {
-                
-                Attack();
-                nextAttackTime = Time.time + 1 / attackRate;
+                if (Time.time >= nextAttackTime)
+                {
+
+                    StartSwingAttack();
+                    nextAttackTime = Time.time + 1 / attackRate;
+                }
             }
         }
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            if (!bSwingAttack && playerController.GetbGrounded())
+            {
+                if (bSerenading)
+                {
+                    StopSerenading();
+
+                }
+                else
+                {
+                    bSerenading = true;
+                    playerAnimation.PlayerStartedSerenading();
+                }
+            }
+        }
+        if (!playerController.GetbGrounded() && bSerenading)
+        {
+            bSerenading = false;
+        }
+        
     }
 
-    void Attack()
+    void StartSwingAttack()
     {
-        
+        bSwingAttack = true;
         playerAnimation.PlayerAttacked();
         StartCoroutine("SwingAttackDelayRoutine");
     }
@@ -49,6 +77,7 @@ public class PlayerCombat : MonoBehaviour
 
             collider.GetComponent<HealthManager>().TakeDamage(attackDamage);
         }
+        bSwingAttack = false;
     }
 
     private void OnDrawGizmosSelected()
@@ -66,4 +95,15 @@ public class PlayerCombat : MonoBehaviour
         yield return new WaitForSeconds(attackAnimationDelay);
         SwingAttack();
     }
+
+    public void StopSerenading()
+    {
+        if (bSerenading)
+        {
+            bSerenading = false;
+            playerAnimation.PlayerStoppedSerenading();
+        }
+    }
+
+    
 }
