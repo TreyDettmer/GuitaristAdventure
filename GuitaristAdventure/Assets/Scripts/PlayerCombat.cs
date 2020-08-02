@@ -12,6 +12,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] int attackDamage = 40;
     [SerializeField] float attackRate = 2f;
     [SerializeField] float attackAnimationDelay = .15f;
+    [SerializeField] GameObject[] serenadeEffects;
     float nextAttackTime = 0f;
     bool bSwingAttack = false;
     bool bSerenading = false;
@@ -48,8 +49,7 @@ public class PlayerCombat : MonoBehaviour
                 }
                 else
                 {
-                    bSerenading = true;
-                    playerAnimation.PlayerStartedSerenading();
+                    StartSerenading();
                 }
             }
         }
@@ -96,12 +96,26 @@ public class PlayerCombat : MonoBehaviour
         SwingAttack();
     }
 
+    public void StartSerenading()
+    {
+        bSerenading = true;
+        playerAnimation.PlayerStartedSerenading();
+        foreach (GameObject obj in serenadeEffects)
+        {
+            obj.SetActive(true);
+        }
+    }
+
     public void StopSerenading()
     {
         if (bSerenading)
         {
             bSerenading = false;
             playerAnimation.PlayerStoppedSerenading();
+            foreach (GameObject obj in serenadeEffects)
+            {
+                obj.SetActive(false);
+            }
         }
     }
 

@@ -70,6 +70,7 @@ public class PlayerAnimation : MonoBehaviour
 
     public void PlayerStoppedSerenading()
     {
+        playerCombat.StopSerenading();
         animator.SetBool("Serenading", false);
         animator.SetBool("UpperBodyAction", false);
         guitar.StopSerenading();
