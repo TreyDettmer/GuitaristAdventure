@@ -12,6 +12,7 @@ public class MonsterController : MonoBehaviour
         Chasing
     }
 
+    [SerializeField] bool bShouldPatrol = false;
     [SerializeField] float lookRadius = 10f;
     Transform playerTransform;
     NavMeshAgent agent;
@@ -25,7 +26,10 @@ public class MonsterController : MonoBehaviour
     {
         playerTransform = PlayerManager.instance.player.transform;
         agent = GetComponent<NavMeshAgent>();
-        GetRandomWaypoint();
+        if (bShouldPatrol)
+        {
+            GetRandomWaypoint();
+        }
     }
 
     private void Update()
@@ -45,14 +49,17 @@ public class MonsterController : MonoBehaviour
         }
         else
         {
-            if (currentWaypoint)
+            if (bShouldPatrol)
             {
-                
-                
-                
-                if (agent.remainingDistance < 2f)
+                if (currentWaypoint)
                 {
-                    UpdateWaypoint();
+
+
+
+                    if (agent.remainingDistance < 2f)
+                    {
+                        UpdateWaypoint();
+                    }
                 }
             }
         }
