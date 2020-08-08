@@ -34,7 +34,10 @@ public class HealthManager : MonoBehaviour
 
     void Die()
     {
-        Destroy(gameObject);
+        if (tag != "Player")
+        {
+            Destroy(gameObject);
+        }
     }
 
     
