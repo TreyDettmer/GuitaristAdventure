@@ -28,11 +28,24 @@ public class MonsterBullet : MonoBehaviour
         
         if (collision.gameObject.tag == "Player")
         {
-            
+
             if (bActive)
             {
-                Debug.Log("hit player");
-                collision.gameObject.GetComponent<HealthManager>().TakeDamage(damage);
+                bool bSuccessfulHit = true;
+                //Check if the player is shielding
+                if (collision.gameObject.GetComponent<PlayerCombat>().currentState == PlayerCombat.PlayerCombatState.Shielding)
+                {
+                    //Check if the player is facing the bullet
+                    if (Vector3.Angle(-collision.gameObject.transform.forward, GetComponent<Rigidbody>().velocity) < 100)
+                    {
+                        bSuccessfulHit = false;
+                    }
+                }
+                if (bSuccessfulHit)
+                {
+                    collision.gameObject.GetComponent<HealthManager>().TakeDamage(damage);
+                    
+                }
                 bActive = false;
             }
         }

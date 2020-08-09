@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     bool bFacingRight = true;
     Vector3 currentVelocity = Vector3.zero;
     const float groundedRadius = .2f;
+    public bool movementEnabled = true;
 
     // Start is called before the first frame update
     void Start()
@@ -63,17 +64,23 @@ public class PlayerController : MonoBehaviour
         {
             if (!bGrounded && bAirControl)
             {
-                //only allow deccelaration in air
-                if ((move >= 0 && rb.velocity.z <= 0) || (move <= 0 && rb.velocity.z >= 0))
+                if (movementEnabled)
                 {
-                    move *= airControlPercentage;
-                    rb.AddForce(new Vector3(0, 0, move * 20f));
+                    //only allow deccelaration in air
+                    if ((move >= 0 && rb.velocity.z <= 0) || (move <= 0 && rb.velocity.z >= 0))
+                    {
+                        move *= airControlPercentage;
+                        rb.AddForce(new Vector3(0, 0, move * 20f));
+                    }
                 }
             }
             else
             {
-                Vector3 targetVelocity = new Vector3(0, rb.velocity.y, move * 10f);
-                rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref currentVelocity, movementSmoothing);
+                if (movementEnabled)
+                {
+                    Vector3 targetVelocity = new Vector3(0, rb.velocity.y, move * 10f);
+                    rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref currentVelocity, movementSmoothing);
+                }
                 
             }
 
@@ -85,18 +92,20 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(new Vector3(0, jumpForce, 0));
             playerAnimation.PlayerJumped();
         }
-
-        if (move > 0 && !bFacingRight)
+        if (movementEnabled)
         {
-            Flip();
-        }
-        else if (move < 0 && bFacingRight)
-        {
-            Flip();
-        }
-        if (move != 0 && bGrounded)
-        {
-            playerCombat.StopSerenading();
+            if (move > 0 && !bFacingRight)
+            {
+                Flip();
+            }
+            else if (move < 0 && bFacingRight)
+            {
+                Flip();
+            }
+            if (move != 0 && bGrounded)
+            {
+                playerCombat.StopSerenading();
+            }
         }
     }
 

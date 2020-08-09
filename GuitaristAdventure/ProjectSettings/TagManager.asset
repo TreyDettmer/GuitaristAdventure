@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Destructable
+  - Monster
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - Destructable
   - Player
   - EnemyBullet
-  - 
+  - Monster
   - 
   - 
   - 

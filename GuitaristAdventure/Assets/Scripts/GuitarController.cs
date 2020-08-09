@@ -9,6 +9,7 @@ public class GuitarController : MonoBehaviour
     [SerializeField] Transform playerTransform;
     [SerializeField] Transform swingPointTransform;
     [SerializeField] Transform serenadePointTransform;
+    [SerializeField] Transform shieldPointTransform;
     // Start is called before the first frame update
     void Start()
     {
@@ -54,6 +55,15 @@ public class GuitarController : MonoBehaviour
         AttachToBack();
     }
 
+    public void Shield()
+    {
+        SetIntoShieldPosition();
+    }
+    public void StopShielding()
+    {
+        AttachToBack();
+    }
+
     public void Disable()
     {
         AttachToBack();
@@ -88,6 +98,14 @@ public class GuitarController : MonoBehaviour
     void SetIntoSerenadePosition()
     {
         transform.SetParent(serenadePointTransform);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = new Quaternion(0, 0, 0, 1);
+        transform.localScale = Vector3.one;
+    }
+
+    void SetIntoShieldPosition()
+    {
+        transform.SetParent(shieldPointTransform);
         transform.localPosition = Vector3.zero;
         transform.localRotation = new Quaternion(0, 0, 0, 1);
         transform.localScale = Vector3.one;

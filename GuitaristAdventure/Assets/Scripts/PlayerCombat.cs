@@ -4,6 +4,15 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
+
+    public enum PlayerCombatState
+    {
+        Attacking,
+        Serenading,
+        Shielding,
+        None
+    }
+
     [SerializeField] PlayerAnimation playerAnimation;
     [SerializeField] PlayerController playerController;
     [SerializeField] LayerMask attackableLayers;
@@ -12,14 +21,18 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] int attackDamage = 40;
     [SerializeField] float attackRate = 2f;
     [SerializeField] float attackAnimationDelay = .15f;
+    [SerializeField] float shieldingDelay = 1.2f;
     [SerializeField] GameObject[] serenadeEffects;
+    public PlayerCombatState currentState;
     float nextAttackTime = 0f;
     bool bSwingAttack = false;
     bool bSerenading = false;
+    bool bShielding = false;
+    float lastShieldTime = 0f;
     // Start is called before the first frame update
     void Start()
     {
-        
+        currentState = PlayerCombatState.None;
     }
 
     // Update is called once per frame
@@ -28,7 +41,7 @@ public class PlayerCombat : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.G))
         {
-            if (!bSerenading)
+            if (!bSerenading && !bShielding)
             {
                 if (Time.time >= nextAttackTime)
                 {
@@ -40,7 +53,7 @@ public class PlayerCombat : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.H))
         {
-            if (!bSwingAttack && playerController.GetbGrounded())
+            if (!bSwingAttack && playerController.GetbGrounded() && !bShielding)
             {
                 if (bSerenading)
                 {
@@ -53,6 +66,14 @@ public class PlayerCombat : MonoBehaviour
                 }
             }
         }
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            if (!bSerenading && !bShielding && !bSwingAttack && Time.time - lastShieldTime >= shieldingDelay)
+            {
+                StartShielding();
+                lastShieldTime = Time.time;
+            }
+        }
         if (!playerController.GetbGrounded() && bSerenading)
         {
             bSerenading = false;
@@ -63,6 +84,7 @@ public class PlayerCombat : MonoBehaviour
     void StartSwingAttack()
     {
         bSwingAttack = true;
+        currentState = PlayerCombatState.Attacking;
         playerAnimation.PlayerAttacked();
         StartCoroutine("SwingAttackDelayRoutine");
     }
@@ -74,9 +96,15 @@ public class PlayerCombat : MonoBehaviour
         Collider[] attackedColliders = Physics.OverlapSphere(attackPoint.position, attackRange, attackableLayers);
         foreach (Collider collider in attackedColliders)
         {
+            HealthManager healthManager = collider.gameObject.GetComponent<HealthManager>();
+            if (healthManager)
+            {
+                healthManager.TakeDamage(attackDamage);
+            }
 
-            collider.GetComponent<HealthManager>().TakeDamage(attackDamage);
+            
         }
+        currentState = PlayerCombatState.None;
         bSwingAttack = false;
     }
 
@@ -99,6 +127,7 @@ public class PlayerCombat : MonoBehaviour
     public void StartSerenading()
     {
         bSerenading = true;
+        currentState = PlayerCombatState.Serenading;
         playerAnimation.PlayerStartedSerenading();
         foreach (GameObject obj in serenadeEffects)
         {
@@ -110,6 +139,7 @@ public class PlayerCombat : MonoBehaviour
     {
         if (bSerenading)
         {
+            currentState = PlayerCombatState.None;
             bSerenading = false;
             playerAnimation.PlayerStoppedSerenading();
             foreach (GameObject obj in serenadeEffects)
@@ -117,6 +147,28 @@ public class PlayerCombat : MonoBehaviour
                 obj.SetActive(false);
             }
         }
+    }
+
+    public void StartShielding()
+    {
+        bShielding = true;
+        currentState = PlayerCombatState.Shielding;
+        playerController.movementEnabled = false;
+        playerAnimation.PlayerStartedShielding();
+        StartCoroutine("ShieldRoutine");
+    }
+
+    public void StopShielding()
+    {
+        playerAnimation.PlayerStoppedShielding();
+        playerController.movementEnabled = true;
+        currentState = PlayerCombatState.None;
+        bShielding = false;
+    }
+    IEnumerator ShieldRoutine()
+    {
+        yield return new WaitForSeconds(.75f);
+        StopShielding();
     }
 
     

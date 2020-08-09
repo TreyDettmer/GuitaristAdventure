@@ -68,6 +68,7 @@ public class PlayerAnimation : MonoBehaviour
         
     }
 
+
     public void PlayerStoppedSerenading()
     {
         playerCombat.StopSerenading();
@@ -76,6 +77,22 @@ public class PlayerAnimation : MonoBehaviour
         guitar.StopSerenading();
 
     }
+
+    public void PlayerStartedShielding()
+    {
+        animator.SetBool("UpperBodyAction", true);
+        animator.SetBool("Shielding", true);
+        guitar.Shield();
+    }
+    public void PlayerStoppedShielding()
+    {
+        animator.SetBool("Shielding", false);
+        animator.SetBool("UpperBodyAction", false);
+        guitar.StopShielding();
+        
+    }
+
+
 
     public GuitarController GetGuitar() { return guitar; }
 

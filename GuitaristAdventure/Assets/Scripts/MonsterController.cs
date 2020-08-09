@@ -11,11 +11,13 @@ public class MonsterController : MonoBehaviour
     {
         Patrolling,
         Chasing,
-        Idling
+        Idling,
+        Dead
+        
     }
 
     [SerializeField] bool bShouldPatrol = false;
-    [SerializeField] float lookRadius = 10f;
+    [SerializeField] float defaultLookDistance = 10f;
     Transform playerTransform;
     NavMeshAgent agent;
     public MonsterState currentState = MonsterState.Patrolling;
@@ -35,6 +37,16 @@ public class MonsterController : MonoBehaviour
     [SerializeField] Transform weaponTip;
     [SerializeField] GameObject bullet;
     [SerializeField] float bulletSpeed = 20f;
+    float lastPlayerAppearance = 0f;
+    [SerializeField] float suspicionTime = 4f;
+    [SerializeField] float suspicionLookDistance = 40f;
+    [SerializeField] List<Collider> ragdollParts = new List<Collider>();
+    [SerializeField] GameObject weapon;
+
+    private void Awake()
+    {
+        SetRagdollParts();
+    }
 
     private void Start()
     {
@@ -47,96 +59,162 @@ public class MonsterController : MonoBehaviour
         weaponDefaultLookAt = weaponCurrentLookAtTransform.localPosition;
     }
 
+    void SetRagdollParts()
+    {
+        Collider[] colliders = this.gameObject.GetComponentsInChildren<Collider>();
+        foreach (Collider c in colliders)
+        {
+            if (c.gameObject != this.gameObject)
+            {
+                c.enabled = false;
+                ragdollParts.Add(c);
+            }
+        }
+
+    }
+
+    public void TurnOnRagdoll()
+    {
+        
+        currentState = MonsterState.Dead;
+        agent.isStopped = true;
+        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        gameObject.GetComponent<Rigidbody>().useGravity = false;
+        
+        //this.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        weapon.GetComponent<BoxCollider>().enabled = true;
+        weapon.GetComponent<Rigidbody>().useGravity = true;
+        gameObject.GetComponent<CapsuleCollider>().enabled = false;
+        gameObject.GetComponent<Animator>().enabled = false;
+        gameObject.GetComponent<Animator>().avatar = null;
+        
+        foreach (Collider c in ragdollParts)
+        {
+            c.enabled = true;
+            c.attachedRigidbody.velocity = Vector3.zero;
+            c.attachedRigidbody.AddForce(-transform.forward * 7f, ForceMode.Impulse);
+        }
+    }
+
     private void Update()
     {
         float distance = Vector3.Distance(playerTransform.position, transform.position);
         bool bCanSeePlayer = false;
-        if (distance <= lookRadius)
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(headTransform.position,playerTransform.position - headTransform.position, out hit,lookRadius,sightLayers))
-            {
-                if (hit.collider.gameObject.tag == "Player")
-                {
-                    bCanSeePlayer = true;
-                    if (currentState != MonsterState.Chasing)
-                    {
-                        if (currentState == MonsterState.Idling)
-                        {
-                            currentState = MonsterState.Chasing;
-                            StopCoroutine("IdleRoutine");
-                            agent.isStopped = false;
-                            bIdling = false;
-
-                        }
-                        else
-                        {
-                            currentState = MonsterState.Chasing;
-                        }
-
-                    }
-                    FaceTarget(playerTransform);
-                    agent.SetDestination(playerTransform.position);
-                }
-                else
-                {
-                    if (currentState == MonsterState.Chasing)
-                    {
-                        weaponCurrentLookAtTransform.localPosition = weaponDefaultLookAt;
-                        currentState = MonsterState.Idling;
-                    }
-                }
-            }
-            else
-            {
-                if (currentState == MonsterState.Chasing)
-                {
-                    weaponCurrentLookAtTransform.localPosition = weaponDefaultLookAt;
-                    currentState = MonsterState.Idling;
-                }
-            }
-
-        }
-        else
-        {
-            if (currentState == MonsterState.Chasing)
-            {
-                weaponCurrentLookAtTransform.localPosition = weaponDefaultLookAt;
-                currentState = MonsterState.Idling;
-            }
-        }
+        RaycastHit hit;
         switch (currentState)
         {
             case MonsterState.Chasing:
-                if (distance > 2.5f && bCanSeePlayer)
+
+                bCanSeePlayer = false;
+                //Check that we can still see the player
+                if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
                 {
-                    weaponCurrentLookAtTransform.position = playerTransform.position;
+                    if (hit.collider.gameObject.tag == "Player")
+                    {
+
+                        bCanSeePlayer = true;
+                        //Continue to chase
+                        if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
+                        {
+                            FaceTarget(playerTransform);
+                        }
+                        agent.SetDestination(playerTransform.position);
+                        //don't point gun at exact player location when player is close. Doesn't look good.
+                        if (distance > 2.5f)
+                        {
+                            weaponCurrentLookAtTransform.position = playerTransform.position;
+                        }
+                    }
                 }
-                if (Time.time - lastFireTime > fireRate)
+                //If we can't see the player, then stop chasing.
+                if (bCanSeePlayer == false)
                 {
-                    
-                    ShootWeapon();
-                    fireRate = Random.Range(fireRateMin, fireRateMax);
-                    lastFireTime = Time.time; 
+                    lastPlayerAppearance = Time.time;
+                    weaponCurrentLookAtTransform.localPosition = weaponDefaultLookAt;
+                    currentState = MonsterState.Idling;
+                    //keep facing the same direction for a while in case the player reappears
+                    Idle(suspicionTime);
                 }
+                else
+                {
+                    //Shoot
+                    if (Time.time - lastFireTime > fireRate)
+                    {
+
+                        ShootWeapon();
+                        fireRate = Random.Range(fireRateMin, fireRateMax);
+                        lastFireTime = Time.time;
+                    }
+                }
+
+
                 break;
             case MonsterState.Idling:
                 if (bIdling == false)
                 {
                     Idle();
-                    
+
                 }
-                break;
+                bCanSeePlayer = false;
+                //If we recently saw the player then look for a further distance
+                if (Time.time - lastPlayerAppearance <= suspicionTime)
+                {
+                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
+                    {
+                        if (hit.collider.gameObject.tag == "Player")
+                        {
+                            bCanSeePlayer = true;
+                        }
+                    }
+                }
+                else //otherwise look the default look distance
+                {
+
+                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
+                    {
+                        if (hit.collider.gameObject.tag == "Player")
+                        {
+                            bCanSeePlayer = true;
+                        }
+                    }
+                }
+                //If we can see the player, then start chasing
+                if (bCanSeePlayer)
+                {
+                    currentState = MonsterState.Chasing;
+                    StopCoroutine("IdleRoutine");
+                    agent.isStopped = false;
+                    bIdling = false;
+                }
+
+                
+
+                 break;
             case MonsterState.Patrolling:
                 if (bShouldPatrol)
                 {
                     if (currentWaypoint)
                     {
-
+                        //Check if we have reached the current waypoint
                         if (agent.remainingDistance < 2f)
                         {
+                            //Go to the next waypoint
                             UpdateWaypoint();
                         }
+                    }
+                    //Check if we can see the player
+                    bCanSeePlayer = false;
+                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
+                    {
+                        if (hit.collider.gameObject.tag == "Player")
+                        {
+                            bCanSeePlayer = true;
+                        }
+                    }
+                    //If we can see the player, then start chasing
+                    if (bCanSeePlayer)
+                    {
+                        currentState = MonsterState.Chasing;
                     }
                 }
                 break;
@@ -182,16 +260,24 @@ public class MonsterController : MonoBehaviour
         agent.SetDestination(currentWaypoint.position);
     }
 
-    void Idle()
+    void Idle(float setTime = -1f)
     {
         bIdling = true;
-        StartCoroutine("IdleRoutine",Random.Range(minIdleTime,maxIdleTime));
+        if (setTime > -1f)
+        {
+            StartCoroutine("IdleRoutine", setTime);
+        }
+        else
+        {
+            StartCoroutine("IdleRoutine", Random.Range(minIdleTime, maxIdleTime));
+        }
+        
         agent.isStopped = true;
     }
 
     void ShootWeapon()
     {
-        //Debug.Log("Bang");
+
         Rigidbody bulletRb;
         bulletRb = Instantiate(bullet, weaponTip.position, Quaternion.identity).GetComponent<Rigidbody>();
         bulletRb.AddForce((playerTransform.position + new Vector3(0,2f,0) - headTransform.position).normalized * bulletSpeed, ForceMode.Impulse);
@@ -202,8 +288,12 @@ public class MonsterController : MonoBehaviour
     void FaceTarget(Transform target)
     {
         Vector3 direction = (target.position - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = lookRotation;
+        if (new Vector3(direction.x, 0, direction.z) != Vector3.zero)
+        {
+            Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+            transform.rotation = lookRotation;
+        }
+
        
 
     }
@@ -223,6 +313,8 @@ public class MonsterController : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, lookRadius);
+        Gizmos.DrawWireSphere(transform.position, defaultLookDistance);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, suspicionLookDistance);
     }
 }
