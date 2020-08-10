@@ -60,7 +60,15 @@ public class HealthManager : MonoBehaviour
                 break;
             case "Monster":
                 MonsterController monsterController = gameObject.GetComponentInParent<MonsterController>();
-                monsterController.TurnOnRagdoll();
+                if (monsterController)
+                {
+                    monsterController.TurnOnRagdoll();
+                }
+                else
+                {
+                    SmasherController smasherController = gameObject.GetComponentInParent<SmasherController>();
+                    smasherController.TurnOnRagdoll();
+                }
                 Destroy(gameObject,3f);
                 break;
         }
