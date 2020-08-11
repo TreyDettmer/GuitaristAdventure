@@ -16,32 +16,47 @@ public class MonsterController : MonoBehaviour
         
     }
 
-    [SerializeField] bool bShouldPatrol = false;
-    [SerializeField] float defaultLookDistance = 10f;
+    
+    
     Transform playerTransform;
     NavMeshAgent agent;
+
+    [Header("Movement")]
+    [SerializeField] bool bShouldPatrol = false;
     public MonsterState currentState = MonsterState.Patrolling;
     [SerializeField] Transform[] waypoints;
     [SerializeField] Transform currentWaypoint;
     int waypointIndex;
-    bool bIdling = false;
     [SerializeField] int idlePercentChance = 80;
     [SerializeField] float minIdleTime, maxIdleTime;
+    bool bIdling = false;
+    
+
+
+    
+    [Header("Combat")]
+    [SerializeField] GameObject weapon;
+    [SerializeField] Transform weaponTip;
+    [SerializeField] GameObject bullet;
+    [SerializeField] Transform weaponCurrentLookAtTransform;
     [SerializeField] float fireRateMin, fireRateMax;
+    [SerializeField] float bulletSpeed = 20f;
     float lastFireTime = 0f;
     float fireRate = 1f;
     Vector3 weaponDefaultLookAt;
-    [SerializeField] Transform weaponCurrentLookAtTransform;
-    [SerializeField] LayerMask sightLayers;
-    [SerializeField] Transform headTransform;
-    [SerializeField] Transform weaponTip;
-    [SerializeField] GameObject bullet;
-    [SerializeField] float bulletSpeed = 20f;
-    float lastPlayerAppearance = 0f;
+
+    [Header("Awareness")]
+    [SerializeField] float defaultLookDistance = 10f;
     [SerializeField] float suspicionTime = 4f;
     [SerializeField] float suspicionLookDistance = 40f;
+    [SerializeField] LayerMask sightLayers;
+    [SerializeField] Transform headTransform;
+    float lastPlayerAppearance = 0f;
+
+    
+    [Header("Ragdoll")]
     [SerializeField] List<Collider> ragdollParts = new List<Collider>();
-    [SerializeField] GameObject weapon;
+    
 
     private void Awake()
     {

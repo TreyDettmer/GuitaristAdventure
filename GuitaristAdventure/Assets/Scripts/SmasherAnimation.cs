@@ -22,16 +22,20 @@ public class SmasherAnimation : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 currentMove = transform.position - previousPosition;
-        float currentSpeed = currentMove.magnitude / Time.deltaTime;
-        float speedPercent = currentSpeed / agent.speed;
-        if (smasherController.currentState == SmasherController.MonsterState.Patrolling)
+        if (agent.enabled)
         {
-            animator.SetFloat("Speed", speedPercent / 2f);
-        }
-        else
-        {
-            animator.SetFloat("Speed", speedPercent);
+            Vector3 currentMove = transform.position - previousPosition;
+            float currentSpeed = currentMove.magnitude / Time.deltaTime;
+            float speedPercent = currentSpeed / agent.speed;
+            if (smasherController.currentState == SmasherController.MonsterState.Patrolling)
+            {
+                animator.SetFloat("Speed", speedPercent / 2f);
+            }
+            else
+            {
+                animator.SetFloat("Speed", speedPercent);
+            }
+            
         }
         previousPosition = transform.position;
     }

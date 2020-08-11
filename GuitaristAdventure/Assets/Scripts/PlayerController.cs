@@ -8,17 +8,22 @@ public class PlayerController : MonoBehaviour
 
     
     
-    [SerializeField] private float jumpForce = 400f;
+    
     [Range(0, .3f)] [SerializeField] private float movementSmoothing = .05f;
-    [Range(0, 1f)] [SerializeField] private float airControlPercentage = 0.5f;
+    
     [SerializeField] Rigidbody rb;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform groundCheck;                           
-    [SerializeField] private Transform ceilingCheck;
     [SerializeField] PlayerAnimation playerAnimation;
     [SerializeField] PlayerCombat playerCombat;
     [SerializeField] bool bGrounded = false;
+    
+
+    [Header("Jumping")]
+    [SerializeField] private float jumpForce = 400f;
     [SerializeField] bool bAirControl = false;
+    [Range(0, 1f)] [SerializeField] private float airControlPercentage = 0.5f;
+
     bool bFacingRight = true;
     Vector3 currentVelocity = Vector3.zero;
     const float groundedRadius = .2f;
