@@ -99,7 +99,26 @@ public class PlayerCombat : MonoBehaviour
             HealthManager healthManager = collider.gameObject.GetComponent<HealthManager>();
             if (healthManager)
             {
-                healthManager.TakeDamage(attackDamage);
+                if (healthManager is SmasherHealthManager)
+                {
+                    SmasherHealthManager smasherHealthManager = (SmasherHealthManager)healthManager;
+
+                    if (Vector3.Angle(smasherHealthManager.transform.forward,transform.forward) > 90)
+                    {
+                        //hit smasher in the front so do less damage
+                        healthManager.TakeDamage(10);
+                    }
+                    else
+                    {
+                        smasherHealthManager.TakeDamage(100);
+                    }
+                }
+                else if (healthManager is MonsterHealthManager)
+                {
+                    MonsterHealthManager monsterHealthManager = (MonsterHealthManager)healthManager;
+                    monsterHealthManager.TakeDamage(100);
+                }
+                
             }
 
             

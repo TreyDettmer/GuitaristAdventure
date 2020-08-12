@@ -41,6 +41,9 @@ public class MonsterController : MonoBehaviour
     [SerializeField] Transform weaponCurrentLookAtTransform;
     [SerializeField] float fireRateMin, fireRateMax;
     [SerializeField] float bulletSpeed = 20f;
+    [SerializeField] float minReactionTime;
+    [SerializeField] float maxReactionTime;
+    bool bReacting = false;
     float lastFireTime = 0f;
     float fireRate = 1f;
     Vector3 weaponDefaultLookAt;
@@ -310,6 +313,22 @@ public class MonsterController : MonoBehaviour
         }
 
        
+
+    }
+
+    IEnumerator ReactionDelayRoutine()
+    {
+        bReacting = true;
+        yield return new WaitForSeconds(Random.Range(minReactionTime, maxReactionTime));
+        if (currentState != MonsterState.Dead)
+        {
+            FaceTarget(playerTransform);
+            if (agent.enabled)
+            {
+                agent.SetDestination(playerTransform.position);
+            }
+            bReacting = false;
+        }
 
     }
 

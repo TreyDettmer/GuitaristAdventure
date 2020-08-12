@@ -12,6 +12,7 @@ public class SmasherController : MonoBehaviour
         Patrolling,
         Chasing,
         Idling,
+        Investigating,
         Dead
 
     }
@@ -29,13 +30,23 @@ public class SmasherController : MonoBehaviour
     int waypointIndex; 
     [SerializeField] int idlePercentChance = 80;
     [SerializeField] float minIdleTime, maxIdleTime;
+    [SerializeField] SmasherAnimation smasherAnimation;
     bool bIdling = false;
 
+
     [Header("Combat")]
-    [SerializeField] float fireRateMin;
-    [SerializeField] float fireRateMax;
+    [SerializeField] Transform attackPoint;
+    [SerializeField] LayerMask attackableLayers;
+    [SerializeField] float attackRange;
+    [SerializeField] float minAttackRate;
+    [SerializeField] float maxAttackRate;
+    [SerializeField] int attackDamage;
+    [SerializeField] float minReactionTime;
+    [SerializeField] float maxReactionTime;
+    bool bAttacking = false;
+    bool bReacting = false;
     float lastFireTime = 0f;
-    float fireRate = 1f;
+    float attackRate = 1f;
 
     
     
@@ -46,7 +57,9 @@ public class SmasherController : MonoBehaviour
     [SerializeField] float suspicionLookDistance = 40f;
     [SerializeField] LayerMask sightLayers;
     [SerializeField] Transform headTransform;
+    Vector3 lastKnownPlayerPosition;
     float lastPlayerAppearance = 0f;
+    float investigationStartTime = 0f;
 
 
 
@@ -56,8 +69,15 @@ public class SmasherController : MonoBehaviour
     [SerializeField] bool bJumping = false;
     [SerializeField] bool bGrounded = false;
     Rigidbody rb;
-    [SerializeField] float jumpForce;
+    [SerializeField] float jumpMultiplier;
+    CustomGravity customGravity;
     const float groundedRadius = .2f;
+    float lastJumpTime = 0f;
+    bool bEnteredJumpTrigger = false;
+    JumpObject currentJumpObject;
+    Transform[] currentJumpPoints;
+    float[] currentJumpInfo;
+
 
 
     [Header("Ragdoll")]
@@ -73,6 +93,7 @@ public class SmasherController : MonoBehaviour
         playerTransform = PlayerManager.instance.player.transform;
         agent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
+        customGravity = GetComponent<CustomGravity>();
         if (bShouldPatrol)
         {
             GetRandomWaypoint();
@@ -88,6 +109,8 @@ public class SmasherController : MonoBehaviour
             if (c.gameObject != this.gameObject)
             {
                 c.enabled = false;
+                Rigidbody rigidbody = c.gameObject.GetComponent<Rigidbody>();
+                
                 ragdollParts.Add(c);
             }
         }
@@ -96,7 +119,7 @@ public class SmasherController : MonoBehaviour
 
     public void TurnOnRagdoll()
     {
-
+        customGravity.bEnabled = false;
         currentState = MonsterState.Dead;
         agent.isStopped = true;
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
@@ -110,10 +133,13 @@ public class SmasherController : MonoBehaviour
         foreach (Collider c in ragdollParts)
         {
             c.enabled = true;
+            c.attachedRigidbody.isKinematic = false;
             c.attachedRigidbody.velocity = Vector3.zero;
             c.attachedRigidbody.AddForce(-transform.forward * 7f, ForceMode.Impulse);
         }
     }
+
+
 
     private void FixedUpdate()
     {
@@ -142,88 +168,129 @@ public class SmasherController : MonoBehaviour
 
     private void Update()
     {
+        if (currentState == MonsterState.Dead)
+        {
+            return;
+        }
         float distance = Vector3.Distance(playerTransform.position, transform.position);
         bool bCanSeePlayer = false;
         RaycastHit hit;
+        
+        if (currentState == MonsterState.Idling || currentState == MonsterState.Patrolling)
+        {
+            if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
+            {
+                if (hit.collider.gameObject.tag == "Player")
+                {
+                    bCanSeePlayer = true;
+                }
+            }
+        }
+        else
+        {
+            if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
+            {
+                if (hit.collider.gameObject.tag == "Player")
+                {
+                    bCanSeePlayer = true;
+                }
+            }
+        }
+
+
+
+
         switch (currentState)
         {
             case MonsterState.Chasing:
 
-                bCanSeePlayer = false;
-                //Check that we can still see the player
-                if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
+                if (bCanSeePlayer)
                 {
-                    if (hit.collider.gameObject.tag == "Player")
+                    Debug.DrawRay(headTransform.position, playerTransform.position - headTransform.position, Color.white);
+                    //if we're not facing the player turn to face the player 
+                    if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
                     {
-
-                        bCanSeePlayer = true;
-                        //Continue to chase
-                        if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
+                        if (!bReacting)
                         {
-                            FaceTarget(playerTransform);
+                            //not turning instantly gives the player time to attack from behind
+                            StartCoroutine("ReactionDelayRoutine");
                         }
-                        if (agent.enabled)
+
+                    }
+                    else
+                    {
+                        if (agent.enabled && !bReacting)
                         {
                             agent.SetDestination(playerTransform.position);
                         }
-                        //don't point gun at exact player location when player is close. Doesn't look good.
-                        if (distance > 2.5f)
+                    }
+                    if (bEnteredJumpTrigger && !bJumping && Time.time - lastJumpTime > 3f)
+                    {
+                        if (currentJumpObject)
                         {
-
+                            StartJump(currentJumpPoints, currentJumpInfo,playerTransform.position);
                         }
                     }
+
+                    if (distance < 3f)
+                    {
+                        if (Physics.CheckSphere(attackPoint.position,attackRange,attackableLayers))
+                        {
+                            
+                            if (!bAttacking)
+                            {
+                                StartCoroutine("AttackRoutine",-1);
+                            }
+                        }
+                    }
+
+                    //Shoot
+                    //if (Time.time - lastFireTime > fireRate)
+                    //{
+
+                    //    ShootWeapon();
+                    //    fireRate = Random.Range(fireRateMin, fireRateMax);
+                    //    lastFireTime = Time.time;
+                    //}
+
                 }
                 //If we can't see the player, then stop chasing.
                 if (bCanSeePlayer == false)
                 {
                     lastPlayerAppearance = Time.time;
+                    lastKnownPlayerPosition = playerTransform.position;
+                    investigationStartTime = Time.time;
+                    currentState = MonsterState.Investigating;
+                    //currentState = MonsterState.Idling;
+                    ////keep facing the same direction for a while in case the player reappears
+                    //Idle(suspicionTime);
+                }
 
-                    currentState = MonsterState.Idling;
-                    //keep facing the same direction for a while in case the player reappears
-                    Idle(suspicionTime);
+                break;
+
+            case MonsterState.Investigating:
+                if (Time.time - investigationStartTime <= suspicionTime)
+                {
+                    if (agent.enabled)
+                    {
+                        agent.SetDestination(lastKnownPlayerPosition);
+                    }
+                    if (bCanSeePlayer)
+                    {
+                        currentState = MonsterState.Chasing;
+                    }
                 }
                 else
                 {
-                    //Shoot
-                    if (Time.time - lastFireTime > fireRate)
-                    {
-
-                        ShootWeapon();
-                        fireRate = Random.Range(fireRateMin, fireRateMax);
-                        lastFireTime = Time.time;
-                    }
+                    currentState = MonsterState.Idling;
+                    Idle();
                 }
-
-
                 break;
+
             case MonsterState.Idling:
                 if (bIdling == false)
                 {
                     Idle();
-
-                }
-                bCanSeePlayer = false;
-                //If we recently saw the player then look for a further distance
-                if (Time.time - lastPlayerAppearance <= suspicionTime)
-                {
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
-                        }
-                    }
-                }
-                else //otherwise look the default look distance
-                {
-
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
-                        }
-                    }
                 }
                 //If we can see the player, then start chasing
                 if (bCanSeePlayer)
@@ -236,9 +303,6 @@ public class SmasherController : MonoBehaviour
                     }
                     bIdling = false;
                 }
-
-
-
                 break;
             case MonsterState.Patrolling:
                 if (bShouldPatrol)
@@ -255,15 +319,6 @@ public class SmasherController : MonoBehaviour
                             }
                         }
                     }
-                    //Check if we can see the player
-                    bCanSeePlayer = false;
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
-                        }
-                    }
                     //If we can see the player, then start chasing
                     if (bCanSeePlayer)
                     {
@@ -276,6 +331,7 @@ public class SmasherController : MonoBehaviour
 
 
     }
+
 
     void UpdateWaypoint()
     {
@@ -330,13 +386,48 @@ public class SmasherController : MonoBehaviour
         }
     }
 
-    void ShootWeapon()
+    IEnumerator AttackRoutine(float rate = -1f)
     {
 
-
+        bAttacking = true;
+        if (agent.enabled)
+        {
+            agent.isStopped = true;
+        }
+        if (rate != -1)
+        {
+            yield return new WaitForSeconds(rate);
+        }
+        else
+        {
+            yield return new WaitForSeconds(Random.Range(minAttackRate, maxAttackRate));
+        }
+        smasherAnimation.Attack();
+        yield return new WaitForSeconds(.25f);
+        Debug.Log("attacked");
+        if (Physics.CheckSphere(attackPoint.position, attackRange, attackableLayers))
+        {
+            Collider[] attackedColliders = Physics.OverlapSphere(attackPoint.position, attackRange, attackableLayers);
+            foreach (Collider c in attackedColliders)
+            {
+                PlayerHealthManager playerHealth = c.gameObject.GetComponentInParent<PlayerHealthManager>();
+                if (playerHealth)
+                {
+                    Debug.Log("Hurt player");
+                    playerHealth.TakeDamage(attackDamage);
+                    break;
+                }
+            }
+        }
+        if (currentState != MonsterState.Idling)
+        {
+            if (agent.enabled)
+            {
+                agent.isStopped = false;
+            }
+        }
+        bAttacking = false;
     }
-
-
     void FaceTarget(Transform target)
     {
         Vector3 direction = (target.position - transform.position).normalized;
@@ -368,6 +459,32 @@ public class SmasherController : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, defaultLookDistance);
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, suspicionLookDistance);
+        if (currentState == MonsterState.Investigating)
+        {
+            Gizmos.DrawWireSphere(lastKnownPlayerPosition, .3f);
+        }
+
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.black;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+        }
+    }
+
+    IEnumerator ReactionDelayRoutine()
+    {
+        bReacting = true;
+        yield return new WaitForSeconds(Random.Range(minReactionTime, maxReactionTime));
+        if (currentState != MonsterState.Dead)
+        {
+            FaceTarget(playerTransform);
+            if (agent.enabled)
+            {
+                agent.SetDestination(playerTransform.position);
+            }
+            bReacting = false;
+        }
+
     }
 
 
@@ -375,38 +492,95 @@ public class SmasherController : MonoBehaviour
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("SmasherJump"))
         {
-            if (currentState == MonsterState.Chasing)
+            
+            currentJumpObject = other.gameObject.GetComponentInParent<JumpObject>();
+            currentJumpPoints = currentJumpObject.GetJumpPoints(groundCheck);
+            currentJumpInfo = currentJumpObject.GetJumpInfo(groundCheck);
+            bEnteredJumpTrigger = true;
+            if (!bJumping)
             {
-                if (!bJumping)
+                if (currentState == MonsterState.Chasing)
                 {
-                    //Jump
-                    JumpObject jumpObject = other.gameObject.GetComponentInParent<JumpObject>();
-                    Transform[] jumpPoints = jumpObject.GetJumpPoints(transform);
-                    StartJump(jumpPoints);
+
+                    StartJump(currentJumpPoints, currentJumpInfo,playerTransform.position);
+                    
+                }
+                else if (currentState == MonsterState.Patrolling)
+                {
+                    if (currentWaypoint)
+                    {
+                        float point2Distance = Vector3.SqrMagnitude(currentWaypoint.position - currentJumpPoints[1].position);
+                        float point1Distance = Vector3.SqrMagnitude(currentWaypoint.position - currentJumpPoints[0].position);
+                        //Check if jump would bring us closer to the current waypoint
+                        if (point2Distance < point1Distance)
+                        {
+                            StartJump(currentJumpPoints, currentJumpInfo,currentWaypoint.position);
+                        }
+                    }
+                }
+                else if (currentState == MonsterState.Investigating)
+                {
+                    
+                    //Check if jump would bring us closer to the player's last known position
+                    float point2Distance = Vector3.SqrMagnitude(lastKnownPlayerPosition - currentJumpPoints[1].position);
+                    float point1Distance = Vector3.SqrMagnitude(lastKnownPlayerPosition - currentJumpPoints[0].position);
+                    if (point2Distance < point1Distance)
+                    {
+                        StartJump(currentJumpPoints, currentJumpInfo,lastKnownPlayerPosition);
+                    }
+                    else
+                    {
+                        Debug.Log("Jump not worth it");
+                    }
                 }
             }
+
         }
     }
 
-    void StartJump(Transform[] jumpPoints)
+    private void OnTriggerExit(Collider other)
     {
-        Debug.Log("Jumped");
-        agent.enabled = false;
-        bJumping = true;
-        
-        
-        rb.AddForce(new Vector3(0, jumpForce, 0));
+        if (other.gameObject.layer == LayerMask.NameToLayer("SmasherJump"))
+        {
+            bEnteredJumpTrigger = false;
+        }
+    }
+
+    void StartJump(Transform[] jumpPoints, float[] jumpInfo,Vector3 target)
+    {
+        //only jump if we are jumping towards the player
+        if (((jumpPoints[0].position - jumpPoints[1].position).z >= 0 && (transform.position - target).z >= 0)
+            || ((jumpPoints[0].position - jumpPoints[1].position).z < 0 && (transform.position - target).z < 0))
+        {
+            float jumpPoint1TargetDif = Mathf.Abs(jumpPoints[0].position.y - target.y);
+            float jumpPoint2TargetDif = Mathf.Abs(jumpPoints[1].position.y - target.y);
+            //ensure that we are not jumping onto a platform above the player instead of just following the player
+            if (jumpPoint2TargetDif <= jumpPoint1TargetDif)
+            {
+                lastJumpTime = Time.time;
+                agent.enabled = false;
+                bJumping = true;
+                rb.isKinematic = false;
+                Vector3 force = calcBallisticVelocityVector(groundCheck.position, jumpPoints[1].position, jumpInfo[0]);
+                rb.AddForce(force * jumpInfo[1] * jumpMultiplier, ForceMode.VelocityChange);
+            }
+        }
+
+
+
 
 
     }
 
     void EndJump()
     {
-        Debug.Log("Landed");
         
-        //bJumping = false;
-        //agent.enabled = true;
+        bJumping = false;
+        rb.isKinematic = true;
+        rb.velocity = Vector3.zero;
+        agent.enabled = true;
     }
+
 
     //this method copied from https://answers.unity.com/questions/1362266/calculate-force-needed-to-reach-certain-point-addf-1.html
     Vector3 calcBallisticVelocityVector(Vector3 source, Vector3 target, float angle)
@@ -420,7 +594,7 @@ public class SmasherController : MonoBehaviour
         distance += h / Mathf.Tan(a);
 
         // calculate velocity
-        float velocity = Mathf.Sqrt(distance * Physics.gravity.magnitude / Mathf.Sin(2 * a));
+        float velocity = Mathf.Sqrt(distance * customGravity.gravityScale / Mathf.Sin(2 * a));
         return velocity * direction.normalized;
     }
 

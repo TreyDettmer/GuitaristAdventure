@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,72 +7,36 @@ using UnityEngine.UI;
 public class HealthManager : MonoBehaviour
 {
     public int maxHealth = 100;
-    int currentHealth;
-    public List<GameObject> livesGUI = new List<GameObject>();
+    protected int currentHealth;
+
+    public event Action<float> OnHealthPercentChanged = delegate { };
+    public GameObject healthBarObject;
+
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         currentHealth = maxHealth;
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
         
     }
 
-    public void TakeDamage(int damage)
+    public void ChangeHealthDisplay()
     {
-        currentHealth -= damage;
-        switch (tag)
-        {
-            case "Player":
-                if (livesGUI.Count > 0)
-                {
-                    Image im = livesGUI[livesGUI.Count - 1].GetComponent<Image>();
-                    im.enabled = false;
-                    livesGUI.RemoveAt(livesGUI.Count - 1);
-                }
-                break;
-        }
-
-        //TODO: play animation
-
-        if (currentHealth <= 0)
-        {
-            //die
-            Die();
-            
-        }
+        float currentHealthPercent = (float)currentHealth / (float)maxHealth;
+        OnHealthPercentChanged(currentHealthPercent);
     }
 
-    void Die()
+    public virtual void TakeDamage(int damage)
     {
-        switch (tag)
-        {
-            case "Player":
-                MonoBehaviour[] comps = GetComponents<MonoBehaviour>();
-                foreach (MonoBehaviour c in comps)
-                {
-                    c.enabled = false;
-                }
-                GetComponent<Rigidbody>().velocity = Vector3.zero;
-                GetComponent<Rigidbody>().isKinematic = true;
-                break;
-            case "Monster":
-                MonsterController monsterController = gameObject.GetComponentInParent<MonsterController>();
-                if (monsterController)
-                {
-                    monsterController.TurnOnRagdoll();
-                }
-                else
-                {
-                    SmasherController smasherController = gameObject.GetComponentInParent<SmasherController>();
-                    smasherController.TurnOnRagdoll();
-                }
-                Destroy(gameObject,3f);
-                break;
-        }
+    }
+
+    protected virtual void Die()
+    {
+
 
     }
 

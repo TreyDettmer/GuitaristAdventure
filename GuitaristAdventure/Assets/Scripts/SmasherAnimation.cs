@@ -39,4 +39,9 @@ public class SmasherAnimation : MonoBehaviour
         }
         previousPosition = transform.position;
     }
+
+    public void Attack()
+    {
+        animator.SetTrigger("Attack");
+    }
 }

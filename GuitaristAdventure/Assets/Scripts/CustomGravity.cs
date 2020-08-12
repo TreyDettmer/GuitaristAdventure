@@ -18,6 +18,7 @@ public class CustomGravity : MonoBehaviour
     // (or via scripting) to define a different default gravity for all objects.
 
     public static float globalGravity = -9.81f;
+    public bool bEnabled = true;
 
     Rigidbody m_rb;
 
@@ -34,7 +35,12 @@ public class CustomGravity : MonoBehaviour
 
     void FixedUpdate()
     {
-        Vector3 gravity = globalGravity * gravityScale * Vector3.up;
-        m_rb.AddForce(gravity, ForceMode.Acceleration);
+        if (bEnabled)
+        {
+            Vector3 gravity = globalGravity * gravityScale * Vector3.up;
+            m_rb.AddForce(gravity, ForceMode.Acceleration);
+        }
     }
+
+
 }
