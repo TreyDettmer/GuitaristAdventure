@@ -22,6 +22,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] float attackRate = 2f;
     [SerializeField] float attackAnimationDelay = .15f;
     [SerializeField] float shieldingDelay = 1.2f;
+    [SerializeField] float shieldingTime = .75f;
     [SerializeField] GameObject[] serenadeEffects;
     public PlayerCombatState currentState;
     float nextAttackTime = 0f;
@@ -186,7 +187,7 @@ public class PlayerCombat : MonoBehaviour
     }
     IEnumerator ShieldRoutine()
     {
-        yield return new WaitForSeconds(.75f);
+        yield return new WaitForSeconds(shieldingTime);
         StopShielding();
     }
 

@@ -2360,7 +2360,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.11178003, y: -0.70111746, z: 0.1127401, w: 0.6951469}
-  m_LocalPosition: {x: 8.05529, y: 6.807182, z: -11.462637}
+  m_LocalPosition: {x: 8.055206, y: 6.807182, z: -11.452923}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -3087,6 +3087,36 @@ Transform:
   m_Father: {fileID: 3042654717230542253}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1288326810
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1288326811}
+  m_Layer: 12
+  m_Name: ExplosionPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1288326811
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1288326810}
+  m_LocalRotation: {x: -0.6779028, y: -0.0044510057, z: -0.00482669, w: 0.73512226}
+  m_LocalPosition: {x: 0.022, y: 0.303, z: -0.368}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 973329301795047381}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: -85.36201, y: 0, z: -0.75200003}
 --- !u!1 &1313178479
 GameObject:
   m_ObjectHideFlags: 0
@@ -3422,7 +3452,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1486977351}
   m_LocalRotation: {x: 0.11178003, y: -0.70111746, z: 0.1127401, w: 0.6951469}
-  m_LocalPosition: {x: 8.05529, y: 6.807182, z: -11.462637}
+  m_LocalPosition: {x: 8.055206, y: 6.807182, z: -11.452923}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 628821028}
@@ -4212,7 +4242,8 @@ MonoBehaviour:
   attackDamage: 25
   attackRate: 2
   attackAnimationDelay: 0.15
-  shieldingDelay: 1
+  shieldingDelay: 0.5
+  shieldingTime: 0.5
   serenadeEffects:
   - {fileID: 1969690498}
   - {fileID: 1582620063}
@@ -11027,6 +11058,7 @@ Transform:
   m_LocalPosition: {x: 3.7456632e-10, y: 0.30696976, z: -0.0000000054444174}
   m_LocalScale: {x: 1, y: 0.9999998, z: 1}
   m_Children:
+  - {fileID: 1288326811}
   - {fileID: 6672504287967896502}
   - {fileID: 6115607616855879022}
   m_Father: {fileID: 4341065988382108875}
@@ -17726,6 +17758,8 @@ MonoBehaviour:
   fireRateMin: 0.8
   fireRateMax: 1.4
   bulletSpeed: 11
+  minReactionTime: 0.3
+  maxReactionTime: 0.6
   defaultLookDistance: 10
   suspicionTime: 4
   suspicionLookDistance: 40
@@ -18683,7 +18717,7 @@ Transform:
   - {fileID: 7766216440462291156}
   - {fileID: 6485370164006956726}
   m_Father: {fileID: 973329301795047381}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6140828253652658225
 GameObject:
@@ -19756,7 +19790,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 973329301795047381}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: -85.36201, y: 0, z: -0.75200003}
 --- !u!137 &6718768106677257103
 SkinnedMeshRenderer:
@@ -21793,6 +21827,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   healthBarObject: {fileID: 274390854}
+  backpack: {fileID: 4559879502192273048}
+  ExplosionPoint: {fileID: 1288326811}
+  explosionEffect: {fileID: 987501621057745178, guid: 28ace0769e34ea34593446c0f8f8e68e,
+    type: 3}
 --- !u!4 &8296288197037225191
 Transform:
   m_ObjectHideFlags: 0

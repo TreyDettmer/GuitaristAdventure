@@ -12,6 +12,7 @@ public class MonsterController : MonoBehaviour
         Patrolling,
         Chasing,
         Idling,
+        Investigating,
         Dead
         
     }
@@ -54,9 +55,11 @@ public class MonsterController : MonoBehaviour
     [SerializeField] float suspicionLookDistance = 40f;
     [SerializeField] LayerMask sightLayers;
     [SerializeField] Transform headTransform;
+    Vector3 lastKnownPlayerPosition;
     float lastPlayerAppearance = 0f;
+    float investigationStartTime = 0f;
 
-    
+
     [Header("Ragdoll")]
     [SerializeField] List<Collider> ragdollParts = new List<Collider>();
     
@@ -116,92 +119,122 @@ public class MonsterController : MonoBehaviour
 
     private void Update()
     {
+        if (currentState == MonsterState.Dead)
+        {
+            return;
+        }
         float distance = Vector3.Distance(playerTransform.position, transform.position);
         bool bCanSeePlayer = false;
         RaycastHit hit;
+
+        if (currentState == MonsterState.Idling || currentState == MonsterState.Patrolling)
+        {
+            if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
+            {
+                if (hit.collider.gameObject.tag == "Player")
+                {
+                    bCanSeePlayer = true;
+                }
+            }
+        }
+        else
+        {
+            if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
+            {
+                if (hit.collider.gameObject.tag == "Player")
+                {
+                    bCanSeePlayer = true;
+                }
+            }
+        }
         switch (currentState)
         {
             case MonsterState.Chasing:
 
-                bCanSeePlayer = false;
-                //Check that we can still see the player
-                if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
+                if (bCanSeePlayer)
                 {
-                    if (hit.collider.gameObject.tag == "Player")
+                    //Continue to chase
+                    if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
                     {
-
-                        bCanSeePlayer = true;
-                        //Continue to chase
-                        if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
+                        if (!bReacting)
                         {
-                            FaceTarget(playerTransform);
+                            //not turning instantly gives the player time to attack from behind
+                            StartCoroutine("ReactionDelayRoutine");
                         }
-                        agent.SetDestination(playerTransform.position);
+                        
+                    }
+                    else
+                    {
+                        if (agent.enabled && !bReacting)
+                        {
+                            agent.SetDestination(playerTransform.position);
+                        }
                         //don't point gun at exact player location when player is close. Doesn't look good.
                         if (distance > 2.5f)
                         {
                             weaponCurrentLookAtTransform.position = playerTransform.position;
                         }
+                        //Shoot
+                        if (Time.time - lastFireTime > fireRate)
+                        {
+
+                            ShootWeapon();
+                            fireRate = Random.Range(fireRateMin, fireRateMax);
+                            lastFireTime = Time.time;
+                        }
                     }
+
+
                 }
                 //If we can't see the player, then stop chasing.
                 if (bCanSeePlayer == false)
                 {
                     lastPlayerAppearance = Time.time;
+                    lastKnownPlayerPosition = playerTransform.position;
+                    investigationStartTime = Time.time;
                     weaponCurrentLookAtTransform.localPosition = weaponDefaultLookAt;
-                    currentState = MonsterState.Idling;
-                    //keep facing the same direction for a while in case the player reappears
-                    Idle(suspicionTime);
+                    currentState = MonsterState.Investigating;
+
+                }
+
+                break;
+            case MonsterState.Investigating:
+                if (Time.time - investigationStartTime <= suspicionTime)
+                {
+                    if (agent.enabled)
+                    {
+                        agent.SetDestination(lastKnownPlayerPosition);
+
+                    }
+                    if (bCanSeePlayer)
+                    {
+                        currentState = MonsterState.Chasing;
+                    }
                 }
                 else
                 {
-                    //Shoot
-                    if (Time.time - lastFireTime > fireRate)
-                    {
-
-                        ShootWeapon();
-                        fireRate = Random.Range(fireRateMin, fireRateMax);
-                        lastFireTime = Time.time;
-                    }
+                    currentState = MonsterState.Idling;
+                    Idle();
                 }
-
-
                 break;
+
+
             case MonsterState.Idling:
                 if (bIdling == false)
                 {
                     Idle();
 
                 }
-                bCanSeePlayer = false;
-                //If we recently saw the player then look for a further distance
-                if (Time.time - lastPlayerAppearance <= suspicionTime)
-                {
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, suspicionLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
-                        }
-                    }
-                }
-                else //otherwise look the default look distance
-                {
-
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
-                        }
-                    }
-                }
                 //If we can see the player, then start chasing
                 if (bCanSeePlayer)
                 {
                     currentState = MonsterState.Chasing;
                     StopCoroutine("IdleRoutine");
-                    agent.isStopped = false;
+                    if (agent.enabled)
+                    {
+                        agent.isStopped = false;
+                    }
+                    
                     bIdling = false;
                 }
 
@@ -213,20 +246,14 @@ public class MonsterController : MonoBehaviour
                 {
                     if (currentWaypoint)
                     {
-                        //Check if we have reached the current waypoint
-                        if (agent.remainingDistance < 2f)
+                        if (agent.enabled)
                         {
-                            //Go to the next waypoint
-                            UpdateWaypoint();
-                        }
-                    }
-                    //Check if we can see the player
-                    bCanSeePlayer = false;
-                    if (Physics.Raycast(headTransform.position, playerTransform.position - headTransform.position, out hit, defaultLookDistance, sightLayers))
-                    {
-                        if (hit.collider.gameObject.tag == "Player")
-                        {
-                            bCanSeePlayer = true;
+                            //Check if we have reached the current waypoint
+                            if (agent.remainingDistance < 2f)
+                            {
+                                //Go to the next waypoint
+                                UpdateWaypoint();
+                            }
                         }
                     }
                     //If we can see the player, then start chasing

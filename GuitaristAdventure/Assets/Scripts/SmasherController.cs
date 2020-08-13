@@ -261,9 +261,6 @@ public class SmasherController : MonoBehaviour
                     lastKnownPlayerPosition = playerTransform.position;
                     investigationStartTime = Time.time;
                     currentState = MonsterState.Investigating;
-                    //currentState = MonsterState.Idling;
-                    ////keep facing the same direction for a while in case the player reappears
-                    //Idle(suspicionTime);
                 }
 
                 break;

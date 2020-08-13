@@ -35,11 +35,14 @@ public class MonsterHealthManager : HealthManager
     protected override void Die()
     {
         base.Die();
-        MonsterController monsterController = gameObject.GetComponentInParent<MonsterController>();
+        MonsterController monsterController = gameObject.GetComponentInParent<MonsterController>();     
         monsterController.TurnOnRagdoll();
+        SetLayerRecursively(gameObject, LayerMask.NameToLayer("DeadMonster"));
         healthBarObject.SetActive(false);
         Destroy(gameObject, 3f);
                 
         
     }
+
+
 }

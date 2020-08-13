@@ -40,5 +40,25 @@ public class HealthManager : MonoBehaviour
 
     }
 
-    
+    // function copied from https://forum.unity.com/threads/change-gameobject-layer-at-run-time-wont-apply-to-child.10091/
+    protected void SetLayerRecursively(GameObject obj, int newLayer)
+    {
+        if (null == obj)
+        {
+            return;
+        }
+
+        obj.layer = newLayer;
+
+        foreach (Transform child in obj.transform)
+        {
+            if (null == child)
+            {
+                continue;
+            }
+            SetLayerRecursively(child.gameObject, newLayer);
+        }
+    }
+
+
 }
