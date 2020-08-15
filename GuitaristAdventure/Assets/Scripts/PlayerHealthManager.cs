@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.AI;
 
 public class PlayerHealthManager : HealthManager
 {
@@ -43,17 +44,45 @@ public class PlayerHealthManager : HealthManager
     protected override void Die()
     {
         base.Die();
+        MonsterController[] monsters = FindObjectsOfType<MonsterController>();
+        foreach (MonsterController monster in monsters)
+        {
+            NavMeshAgent monsterAgent = monster.gameObject.GetComponent<NavMeshAgent>();
+            monsterAgent.enabled = false;
 
+            MonoBehaviour[] monsterComps = monster.gameObject.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour comp in monsterComps)
+            {
+                comp.enabled = false;
+            }
+
+        }
+        SmasherController[] smashers = FindObjectsOfType<SmasherController>();
+        foreach (SmasherController smasher in smashers)
+        {
+            NavMeshAgent smasherAgent = smasher.gameObject.GetComponent<NavMeshAgent>();
+            smasherAgent.enabled = false;
+
+            MonoBehaviour[] smasherComps = smasher.gameObject.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour comp in smasherComps)
+            {
+                comp.enabled = false;
+            }
+
+        }
+        GetComponent<PlayerController>().TurnOnRagdoll();
         MonoBehaviour[] comps = GetComponents<MonoBehaviour>();
         foreach (MonoBehaviour c in comps)
         {
             c.enabled = false;
         }
         GetComponent<Rigidbody>().velocity = Vector3.zero;
-        GetComponent<Rigidbody>().isKinematic = true;
-                
 
-        
+
+        PlayerManager.RestartScene();
+
+
+
     }
 }
 

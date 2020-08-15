@@ -121,7 +121,11 @@ public class SmasherController : MonoBehaviour
     {
         customGravity.bEnabled = false;
         currentState = MonsterState.Dead;
-        agent.isStopped = true;
+        if (agent.enabled)
+        {
+            agent.isStopped = true;
+        }
+        
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
         gameObject.GetComponent<Rigidbody>().useGravity = false;
 
@@ -154,8 +158,9 @@ public class SmasherController : MonoBehaviour
                 bGrounded = true;
                 if (bWasGrounded == false)
                 {
-                        //landed on the ground
-                        EndJump();
+                    //landed on the ground
+                    EndJump();
+                    smasherAnimation.Landed();
                     
                     
 
@@ -332,38 +337,49 @@ public class SmasherController : MonoBehaviour
 
     void UpdateWaypoint()
     {
-        if (Random.Range(1, 100) >= 100 - idlePercentChance)
+        if (waypoints.Length > 0)
         {
-
-            currentState = MonsterState.Idling;
-        }
-        else
-        {
-            if (waypoints.Length <= waypointIndex + 1)
+            if (Random.Range(1, 100) >= 100 - idlePercentChance)
             {
-                waypointIndex = 0;
-                currentWaypoint = waypoints[0];
 
+                currentState = MonsterState.Idling;
             }
             else
             {
-                waypointIndex += 1;
-                currentWaypoint = waypoints[waypointIndex];
+                if (waypoints.Length <= waypointIndex + 1)
+                {
+                    waypointIndex = 0;
+                    currentWaypoint = waypoints[0];
 
+                }
+                else
+                {
+                    waypointIndex += 1;
+                    currentWaypoint = waypoints[waypointIndex];
+
+                }
+                FaceTarget(currentWaypoint);
+                agent.SetDestination(currentWaypoint.position);
             }
-            FaceTarget(currentWaypoint);
-            agent.SetDestination(currentWaypoint.position);
         }
 
     }
 
     void GetRandomWaypoint()
     {
-        int randomIndex = Random.Range(0, waypoints.Length);
-        waypointIndex = randomIndex;
-        currentWaypoint = waypoints[waypointIndex];
-        FaceTarget(currentWaypoint);
-        agent.SetDestination(currentWaypoint.position);
+        if (waypoints.Length > 0)
+        {
+            int randomIndex = Random.Range(0, waypoints.Length);
+            waypointIndex = randomIndex;
+            currentWaypoint = waypoints[waypointIndex];
+            FaceTarget(currentWaypoint);
+            if (agent.enabled)
+            {
+                agent.SetDestination(currentWaypoint.position);
+            }
+        }
+
+        
     }
 
     void Idle(float setTime = -1f)
@@ -401,7 +417,6 @@ public class SmasherController : MonoBehaviour
         }
         smasherAnimation.Attack();
         yield return new WaitForSeconds(.25f);
-        Debug.Log("attacked");
         if (Physics.CheckSphere(attackPoint.position, attackRange, attackableLayers))
         {
             Collider[] attackedColliders = Physics.OverlapSphere(attackPoint.position, attackRange, attackableLayers);
@@ -410,7 +425,6 @@ public class SmasherController : MonoBehaviour
                 PlayerHealthManager playerHealth = c.gameObject.GetComponentInParent<PlayerHealthManager>();
                 if (playerHealth)
                 {
-                    Debug.Log("Hurt player");
                     playerHealth.TakeDamage(attackDamage);
                     break;
                 }
@@ -424,6 +438,7 @@ public class SmasherController : MonoBehaviour
             }
         }
         bAttacking = false;
+        smasherAnimation.StopAttack();
     }
     void FaceTarget(Transform target)
     {
@@ -533,6 +548,13 @@ public class SmasherController : MonoBehaviour
             }
 
         }
+
+        DeathBarrier deathBarrier = other.gameObject.GetComponent<DeathBarrier>();
+        if (deathBarrier)
+        {
+            deathBarrier.Kill(gameObject);
+        }
+        
     }
 
     private void OnTriggerExit(Collider other)
@@ -554,10 +576,12 @@ public class SmasherController : MonoBehaviour
             //ensure that we are not jumping onto a platform above the player instead of just following the player
             if (jumpPoint2TargetDif <= jumpPoint1TargetDif)
             {
+
                 lastJumpTime = Time.time;
                 agent.enabled = false;
                 bJumping = true;
                 rb.isKinematic = false;
+                smasherAnimation.Jumped();
                 Vector3 force = calcBallisticVelocityVector(groundCheck.position, jumpPoints[1].position, jumpInfo[0]);
                 rb.AddForce(force * jumpInfo[1] * jumpMultiplier, ForceMode.VelocityChange);
             }
@@ -588,11 +612,43 @@ public class SmasherController : MonoBehaviour
         float distance = direction.magnitude;
         float a = angle * Mathf.Deg2Rad;
         direction.y = distance * Mathf.Tan(a);
-        distance += h / Mathf.Tan(a);
+        if (float.IsNaN(direction.y))
+        {
+            Debug.Log("Direction.y is NaN.");
+            
 
+        }
+        distance += h / Mathf.Tan(a);
+        if (float.IsNaN(distance))
+        {
+            Debug.Log("Distance is NaN.");
+        }
+
+        if (distance * customGravity.gravityScale / Mathf.Sin(2 * a) < 0)
+        {
+            Debug.Log("tried to divide negative number");
+            if (distance < 0)
+            {
+                Debug.Log("Distance: " + distance + " is a negative number");
+            }
+            if (Mathf.Sin(2 * a) < 0)
+            {
+                Debug.Log("Sin(2 * a) is negative. a = " + a);
+            }
+
+        }
         // calculate velocity
         float velocity = Mathf.Sqrt(distance * customGravity.gravityScale / Mathf.Sin(2 * a));
+        if (float.IsNaN(velocity))
+        {
+            Debug.Log("velocity is NaN.");
+        }
         return velocity * direction.normalized;
+    }
+
+    public bool GetbGrounded()
+    {
+        return bGrounded;
     }
 
 

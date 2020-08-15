@@ -107,7 +107,7 @@ public class PlayerCombat : MonoBehaviour
                     if (Vector3.Angle(smasherHealthManager.transform.forward,transform.forward) > 90)
                     {
                         //hit smasher in the front so do less damage
-                        healthManager.TakeDamage(10);
+                        healthManager.TakeDamage(25);
                     }
                     else
                     {

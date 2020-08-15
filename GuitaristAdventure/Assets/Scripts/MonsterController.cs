@@ -98,7 +98,11 @@ public class MonsterController : MonoBehaviour
     {
         
         currentState = MonsterState.Dead;
-        agent.isStopped = true;
+        if (agent.enabled)
+        {
+            agent.isStopped = true;
+        }
+        
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
         gameObject.GetComponent<Rigidbody>().useGravity = false;
         
@@ -271,38 +275,50 @@ public class MonsterController : MonoBehaviour
 
     void UpdateWaypoint()
     {
-        if (Random.Range(1, 100) >= 100 - idlePercentChance)
+        if (waypoints.Length > 0)
         {
-            
-            currentState = MonsterState.Idling;
-        }
-        else
-        {
-            if (waypoints.Length <= waypointIndex + 1)
-            {
-                waypointIndex = 0;
-                currentWaypoint = waypoints[0];
 
+
+            if (Random.Range(1, 100) >= 100 - idlePercentChance)
+            {
+
+                currentState = MonsterState.Idling;
             }
             else
             {
-                waypointIndex += 1;
-                currentWaypoint = waypoints[waypointIndex];
+                if (waypoints.Length <= waypointIndex + 1)
+                {
+                    waypointIndex = 0;
+                    currentWaypoint = waypoints[0];
 
+                }
+                else
+                {
+                    waypointIndex += 1;
+                    currentWaypoint = waypoints[waypointIndex];
+
+                }
+                FaceTarget(currentWaypoint);
+                agent.SetDestination(currentWaypoint.position);
             }
-            FaceTarget(currentWaypoint);
-            agent.SetDestination(currentWaypoint.position);
         }
 
     }
 
     void GetRandomWaypoint()
     {
-        int randomIndex = Random.Range(0, waypoints.Length);
-        waypointIndex = randomIndex;
-        currentWaypoint = waypoints[waypointIndex];
-        FaceTarget(currentWaypoint);
-        agent.SetDestination(currentWaypoint.position);
+        if (waypoints.Length > 0)
+        {
+            int randomIndex = Random.Range(0, waypoints.Length);
+            waypointIndex = randomIndex;
+            currentWaypoint = waypoints[waypointIndex];
+            FaceTarget(currentWaypoint);
+            if (agent.enabled)
+            {
+                agent.SetDestination(currentWaypoint.position);
+            }
+        }
+        
     }
 
     void Idle(float setTime = -1f)
@@ -377,5 +393,14 @@ public class MonsterController : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, defaultLookDistance);
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, suspicionLookDistance);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        DeathBarrier deathBarrier = other.gameObject.GetComponent<DeathBarrier>();
+        if (deathBarrier)
+        {
+            deathBarrier.Kill(gameObject);
+        }
     }
 }

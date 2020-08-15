@@ -10,6 +10,9 @@ public class SmasherAnimation : MonoBehaviour
     NavMeshAgent agent;
     SmasherController smasherController;
     Vector3 previousPosition;
+    Rigidbody rb;
+    [SerializeField] Transform backPackEffectPoint;
+    [SerializeField] GameObject backPackEffectObject;
     // Start is called before the first frame update
     void Start()
     {
@@ -17,6 +20,7 @@ public class SmasherAnimation : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         smasherController = GetComponent<SmasherController>();
         previousPosition = transform.position;
+        rb = GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
@@ -29,7 +33,7 @@ public class SmasherAnimation : MonoBehaviour
             float speedPercent = currentSpeed / agent.speed;
             if (smasherController.currentState == SmasherController.MonsterState.Patrolling)
             {
-                animator.SetFloat("Speed", speedPercent / 2f);
+                animator.SetFloat("Speed", speedPercent);
             }
             else
             {
@@ -37,11 +41,35 @@ public class SmasherAnimation : MonoBehaviour
             }
             
         }
+        if (rb.velocity.y < 0 && !smasherController.GetbGrounded())
+        {
+            animator.SetBool("Falling", true);
+        }
         previousPosition = transform.position;
     }
 
     public void Attack()
     {
+        animator.SetBool("UpperBodyAction", true);
         animator.SetTrigger("Attack");
+    }
+
+    public void StopAttack()
+    {
+        animator.SetBool("UpperBodyAction", false);
+    }
+    public void Jumped()
+    {
+        
+        animator.SetBool("Grounded", false);
+        GameObject backPackEffect = null;
+        backPackEffect = Instantiate(backPackEffectObject, backPackEffectPoint.position, backPackEffectPoint.rotation,backPackEffectPoint);
+        Destroy(backPackEffect, 1f);
+    }
+
+    public void Landed()
+    {
+        animator.SetBool("Falling", false);
+        animator.SetBool("Grounded", true);
     }
 }

@@ -17,27 +17,79 @@ public class PlayerController : MonoBehaviour
     [SerializeField] PlayerAnimation playerAnimation;
     [SerializeField] PlayerCombat playerCombat;
     [SerializeField] bool bGrounded = false;
+    [SerializeField] GameObject guitar;
     
 
     [Header("Jumping")]
     [SerializeField] private float jumpForce = 400f;
     [SerializeField] bool bAirControl = false;
     [Range(0, 1f)] [SerializeField] private float airControlPercentage = 0.5f;
+    CustomGravity customGravity;
+
+    [Header("Ragdoll")]
+    [SerializeField] List<Collider> ragdollParts = new List<Collider>();
+    [SerializeField] Animator animator;
 
     bool bFacingRight = true;
     Vector3 currentVelocity = Vector3.zero;
     const float groundedRadius = .2f;
     public bool movementEnabled = true;
 
+    private void Awake()
+    {
+        SetRagdollParts();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        customGravity = GetComponent<CustomGravity>();
     }
 
     // Update is called once per frame
     void Update()
     {
+    }
+
+    void SetRagdollParts()
+    {
+        Collider[] colliders = this.gameObject.GetComponentsInChildren<Collider>();
+        foreach (Collider c in colliders)
+        {
+            if (c.gameObject != this.gameObject)
+            {
+                c.enabled = false;
+                Rigidbody rigidbody = c.gameObject.GetComponent<Rigidbody>();
+
+                ragdollParts.Add(c);
+            }
+        }
+
+    }
+
+    public void TurnOnRagdoll()
+    {
+
+        Destroy(guitar);
+        customGravity.bEnabled = false;
+        gameObject.GetComponent<SphereCollider>().enabled = false;
+        gameObject.GetComponent<BoxCollider>().enabled = false;
+
+        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        gameObject.GetComponent<Rigidbody>().useGravity = false;
+        gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+
+
+        animator.enabled = false;
+        animator.avatar = null;
+
+        foreach (Collider c in ragdollParts)
+        {
+            c.enabled = true;
+            c.attachedRigidbody.isKinematic = false;
+            c.attachedRigidbody.velocity = Vector3.zero;
+            
+        }
     }
 
     private void FixedUpdate()
@@ -124,6 +176,15 @@ public class PlayerController : MonoBehaviour
     public bool GetbGrounded()
     {
         return bGrounded;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        DeathBarrier deathBarrier = other.gameObject.GetComponent<DeathBarrier>();
+        if (deathBarrier)
+        {
+            deathBarrier.Kill(gameObject);
+        }
     }
 
 }
