@@ -76,12 +76,16 @@ public class SmasherController : MonoBehaviour
     bool bEnteredJumpTrigger = false;
     JumpObject currentJumpObject;
     Transform[] currentJumpPoints;
-    float[] currentJumpInfo;
-
-
+    int currentJumpInfo;
 
     [Header("Ragdoll")]
     [SerializeField] List<Collider> ragdollParts = new List<Collider>();
+
+    [Header("Debug")]
+    [SerializeField] bool bShowLookDistance = false;
+    [SerializeField] bool bShowSightLine = false;
+    [SerializeField] bool bShowLastKnownPlayerPosition = false;
+    [SerializeField] bool bShowAttackSphere = false;
 
     private void Awake()
     {
@@ -211,7 +215,10 @@ public class SmasherController : MonoBehaviour
 
                 if (bCanSeePlayer)
                 {
-                    Debug.DrawRay(headTransform.position, playerTransform.position - headTransform.position, Color.white);
+                    if (bShowSightLine)
+                    {
+                        Debug.DrawRay(headTransform.position, playerTransform.position - headTransform.position, Color.white);
+                    }
                     //if we're not facing the player turn to face the player 
                     if (Vector3.Angle(playerTransform.position - transform.position, transform.forward) >= 90)
                     {
@@ -467,19 +474,33 @@ public class SmasherController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, defaultLookDistance);
+        if (bShowLookDistance)
+        {
+            Gizmos.DrawWireSphere(transform.position, defaultLookDistance);
+        }
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, suspicionLookDistance);
+        if (bShowLookDistance)
+        {
+            Gizmos.DrawWireSphere(transform.position, suspicionLookDistance);
+        }
         if (currentState == MonsterState.Investigating)
         {
-            Gizmos.DrawWireSphere(lastKnownPlayerPosition, .3f);
+            if (bShowLastKnownPlayerPosition)
+            {
+                Gizmos.DrawWireSphere(lastKnownPlayerPosition, .3f);
+            }
         }
 
         if (attackPoint != null)
         {
             Gizmos.color = Color.black;
-            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+            if (bShowAttackSphere)
+            {
+                Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+            }
+            
         }
     }
 
@@ -506,8 +527,8 @@ public class SmasherController : MonoBehaviour
         {
             
             currentJumpObject = other.gameObject.GetComponentInParent<JumpObject>();
-            currentJumpPoints = currentJumpObject.GetJumpPoints(groundCheck);
-            currentJumpInfo = currentJumpObject.GetJumpInfo(groundCheck);
+            currentJumpInfo = currentJumpObject.GetJumpPositionIndex(groundCheck);
+            currentJumpPoints = currentJumpObject.GetJumpPoints(currentJumpInfo);
             bEnteredJumpTrigger = true;
             if (!bJumping)
             {
@@ -562,10 +583,14 @@ public class SmasherController : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("SmasherJump"))
         {
             bEnteredJumpTrigger = false;
+            currentJumpInfo = -1;
+            currentJumpObject = null;
+            currentJumpPoints = null;
         }
+
     }
 
-    void StartJump(Transform[] jumpPoints, float[] jumpInfo,Vector3 target)
+    void StartJump(Transform[] jumpPoints, int jumpInfo,Vector3 target)
     {
         //only jump if we are jumping towards the player
         if (((jumpPoints[0].position - jumpPoints[1].position).z >= 0 && (transform.position - target).z >= 0)
@@ -573,8 +598,9 @@ public class SmasherController : MonoBehaviour
         {
             float jumpPoint1TargetDif = Mathf.Abs(jumpPoints[0].position.y - target.y);
             float jumpPoint2TargetDif = Mathf.Abs(jumpPoints[1].position.y - target.y);
+            
             //ensure that we are not jumping onto a platform above the player instead of just following the player
-            if (jumpPoint2TargetDif <= jumpPoint1TargetDif)
+            if (target.y > jumpPoints[1].position.y)
             {
 
                 lastJumpTime = Time.time;
@@ -582,9 +608,14 @@ public class SmasherController : MonoBehaviour
                 bJumping = true;
                 rb.isKinematic = false;
                 smasherAnimation.Jumped();
-                Vector3 force = calcBallisticVelocityVector(groundCheck.position, jumpPoints[1].position, jumpInfo[0]);
-                rb.AddForce(force * jumpInfo[1] * jumpMultiplier, ForceMode.VelocityChange);
+                if (currentJumpObject != null)
+                {
+                    Vector3 initialVelocity = currentJumpObject.Launch(groundCheck.position,currentJumpInfo);
+                    rb.velocity = initialVelocity;
+                }
+
             }
+
         }
 
 
@@ -603,53 +634,23 @@ public class SmasherController : MonoBehaviour
     }
 
 
-    //this method copied from https://answers.unity.com/questions/1362266/calculate-force-needed-to-reach-certain-point-addf-1.html
-    Vector3 calcBallisticVelocityVector(Vector3 source, Vector3 target, float angle)
-    {
-        Vector3 direction = target - source;
-        float h = direction.y;
-        direction.y = 0;
-        float distance = direction.magnitude;
-        float a = angle * Mathf.Deg2Rad;
-        direction.y = distance * Mathf.Tan(a);
-        if (float.IsNaN(direction.y))
-        {
-            Debug.Log("Direction.y is NaN.");
-            
-
-        }
-        distance += h / Mathf.Tan(a);
-        if (float.IsNaN(distance))
-        {
-            Debug.Log("Distance is NaN.");
-        }
-
-        if (distance * customGravity.gravityScale / Mathf.Sin(2 * a) < 0)
-        {
-            Debug.Log("tried to divide negative number");
-            if (distance < 0)
-            {
-                Debug.Log("Distance: " + distance + " is a negative number");
-            }
-            if (Mathf.Sin(2 * a) < 0)
-            {
-                Debug.Log("Sin(2 * a) is negative. a = " + a);
-            }
-
-        }
-        // calculate velocity
-        float velocity = Mathf.Sqrt(distance * customGravity.gravityScale / Mathf.Sin(2 * a));
-        if (float.IsNaN(velocity))
-        {
-            Debug.Log("velocity is NaN.");
-        }
-        return velocity * direction.normalized;
-    }
-
     public bool GetbGrounded()
     {
         return bGrounded;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

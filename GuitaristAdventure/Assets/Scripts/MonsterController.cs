@@ -58,6 +58,7 @@ public class MonsterController : MonoBehaviour
     Vector3 lastKnownPlayerPosition;
     float lastPlayerAppearance = 0f;
     float investigationStartTime = 0f;
+    float discoveredPlayerTime = 0f;
 
 
     [Header("Ragdoll")]
@@ -179,7 +180,7 @@ public class MonsterController : MonoBehaviour
                             weaponCurrentLookAtTransform.position = playerTransform.position;
                         }
                         //Shoot
-                        if (Time.time - lastFireTime > fireRate)
+                        if (Time.time - lastFireTime > fireRate && Time.time - discoveredPlayerTime > 1f)
                         {
 
                             ShootWeapon();
@@ -212,7 +213,9 @@ public class MonsterController : MonoBehaviour
                     }
                     if (bCanSeePlayer)
                     {
+                        discoveredPlayerTime = Time.time;
                         currentState = MonsterState.Chasing;
+                        
                     }
                 }
                 else
@@ -232,6 +235,7 @@ public class MonsterController : MonoBehaviour
                 //If we can see the player, then start chasing
                 if (bCanSeePlayer)
                 {
+                    discoveredPlayerTime = Time.time;
                     currentState = MonsterState.Chasing;
                     StopCoroutine("IdleRoutine");
                     if (agent.enabled)
@@ -263,6 +267,7 @@ public class MonsterController : MonoBehaviour
                     //If we can see the player, then start chasing
                     if (bCanSeePlayer)
                     {
+                        discoveredPlayerTime = Time.time;
                         currentState = MonsterState.Chasing;
                     }
                 }

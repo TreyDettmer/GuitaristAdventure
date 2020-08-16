@@ -149,21 +149,20 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(new Vector3(0, jumpForce, 0));
             playerAnimation.PlayerJumped();
         }
-        if (movementEnabled)
+
+        if (move > 0 && !bFacingRight)
         {
-            if (move > 0 && !bFacingRight)
-            {
-                Flip();
-            }
-            else if (move < 0 && bFacingRight)
-            {
-                Flip();
-            }
-            if (move != 0 && bGrounded)
-            {
-                playerCombat.StopSerenading();
-            }
+            Flip();
         }
+        else if (move < 0 && bFacingRight)
+        {
+            Flip();
+        }
+        if (move != 0 && bGrounded)
+        {
+            playerCombat.StopSerenading();
+        }
+        
     }
 
     void Flip()

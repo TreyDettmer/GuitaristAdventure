@@ -107,7 +107,7 @@ public class PlayerCombat : MonoBehaviour
                     if (Vector3.Angle(smasherHealthManager.transform.forward,transform.forward) > 90)
                     {
                         //hit smasher in the front so do less damage
-                        healthManager.TakeDamage(25);
+                        healthManager.TakeDamage(34);
                     }
                     else
                     {
@@ -117,7 +117,16 @@ public class PlayerCombat : MonoBehaviour
                 else if (healthManager is MonsterHealthManager)
                 {
                     MonsterHealthManager monsterHealthManager = (MonsterHealthManager)healthManager;
-                    monsterHealthManager.TakeDamage(100);
+
+                    if (Vector3.Angle(monsterHealthManager.transform.forward, transform.forward) > 90)
+                    {
+
+                        monsterHealthManager.TakeDamage(50);
+                    }
+                    else
+                    {
+                        monsterHealthManager.TakeDamage(100);
+                    }
                 }
                 
             }

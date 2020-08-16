@@ -4517,12 +4517,12 @@ MonoBehaviour:
   weaponTip: {fileID: 2736540894808910295}
   bullet: {fileID: 3428733401587360464, guid: 4804953ed01b9104cbee5b0646e0fb50, type: 3}
   weaponCurrentLookAtTransform: {fileID: 2736540894366878126}
-  fireRateMin: 0.8
-  fireRateMax: 1.4
+  fireRateMin: 1.2
+  fireRateMax: 2
   bulletSpeed: 11
   minReactionTime: 0.3
-  maxReactionTime: 0.6
-  defaultLookDistance: 11
+  maxReactionTime: 0.7
+  defaultLookDistance: 14
   suspicionTime: 4
   suspicionLookDistance: 40
   sightLayers:
@@ -4537,7 +4537,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8070073063996965874}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: e874ff7e0fc11bc4186ac0486cb58399, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5

@@ -37,7 +37,7 @@ public class CustomGravity : MonoBehaviour
     {
         if (bEnabled)
         {
-            Vector3 gravity = globalGravity * gravityScale * Vector3.up;
+            Vector3 gravity = -gravityScale * Vector3.up;
             m_rb.AddForce(gravity, ForceMode.Acceleration);
         }
     }

@@ -548,7 +548,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 803769497301087576}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: e874ff7e0fc11bc4186ac0486cb58399, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
@@ -606,7 +606,7 @@ MonoBehaviour:
   attackDamage: 34
   minReactionTime: 0.4
   maxReactionTime: 1.2
-  defaultLookDistance: 11
+  defaultLookDistance: 14
   suspicionTime: 4
   suspicionLookDistance: 30
   sightLayers:
@@ -619,8 +619,12 @@ MonoBehaviour:
   groundCheck: {fileID: 8648737639552847600}
   bJumping: 0
   bGrounded: 1
-  jumpMultiplier: 1
+  jumpMultiplier: 5
   ragdollParts: []
+  bShowLookDistance: 1
+  bShowSightLine: 1
+  bShowLastKnownPlayerPosition: 1
+  bShowAttackSphere: 1
 --- !u!114 &803769497301087578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -688,7 +692,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 346a60ba95c746c48ac8123093df63b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gravityScale: 3
+  gravityScale: 29.43
   timeScale: 1
   bEnabled: 1
 --- !u!1 &1209965597174283298
