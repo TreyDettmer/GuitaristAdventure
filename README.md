@@ -28,3 +28,21 @@ Your character is fully customizable. Choose your hairstyle/color, shirt style/c
 There are two types of enemies. The regular Monster has a gun that shoots *sharp* objects. As a player, you have to dodge and block incoming projectiles as you close try and kill the monster. The second type of monster, called the Smasher, has no gun but is very mobile. The Smasher can follow up platforms using the jump pack on its back. The quick punch rate of the Smasher can be deadly so don't let it get too close.
 
 Both enemy types are vulnerable to attacks from behind, especially the Smasher. Try to jump over the enemy's head and attack them from behind before they turn around.
+
+Monster 
+
+![Image of Monster](ReadMeFiles/Images/GA_Monster.gif)
+
+Smasher
+
+![Image of Smasher](ReadMeFiles/Images/GA_Smasher.gif)
+
+Each game level will have a theme based on one of the following music genres: punk rock, country, jazz, and edm. Each level's art and sound design will be different based on the theme. 
+
+### Looking Towards The Future
+This project will require **a lot** of modeling from someone who lacks artistic abilities, but has a perfectionist mindset. So, to avoid frustration, I am going to span out the work I do on this project. This blog (I'm calling it that from now on) will let me work on the project at my own pace while still keeping the masses of people (sarcasm btw) who read this updated with the state of the project. I'll update this blog when I've finished a model(s) or done something that is worth sharing. 
+
+In fact, here is a skateboard I recently modeled which will be a part of the background of one of the levels!
+
+
+Till next time...
