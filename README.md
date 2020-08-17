@@ -44,5 +44,6 @@ This project will require **a lot** of modeling from someone who lacks artistic 
 
 In fact, here is a skateboard I recently modeled which will be a part of the background of one of the levels!
 
+![Image of Skateboard](ReadMeFiles/Images/Skateboard.gif)
 
 Till next time...
