@@ -47,3 +47,18 @@ In fact, here is a skateboard I recently modeled which will be a part of the bac
 ![Image of Skateboard](ReadMeFiles/Images/Skateboard.gif)
 
 Till next time...
+
+## 8/16/2020
+### New Models!
+
+A Bottle
+
+![Image of Bottle](ReadMeFiles/Images/Bottle.gif)
+
+A spraypaint can
+
+![Image of spraypaint can](ReadMeFiles/Images/SprayPaintCan.gif)
+
+A pickup truck
+
+![Image of pickup truck](ReadMeFiles/Images/Truck.gif)
